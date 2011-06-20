@@ -80,7 +80,8 @@ wax_instance_userdata *wax_instance_create(lua_State *L, id instance, BOOL isCla
     instanceUserdata->instance = instance;
     instanceUserdata->isClass = isClass;
     instanceUserdata->isSuper = nil;
-	instanceUserdata->actAsSuper = NO;
+    instanceUserdata->actAsSuper = NO;
+    instanceUserdata->isDealloced = NO;
      
     if (!isClass) {
         wax_log(LOG_GC, @"Retaining %@ for %@(%p -> %p)", isClass ? @"class" : @"instance", [instance class], instance, instanceUserdata);
@@ -336,12 +337,15 @@ static int __newindex(lua_State *L) {
 static int __gc(lua_State *L) {
     wax_instance_userdata *instanceUserdata = (wax_instance_userdata *)luaL_checkudata(L, 1, WAX_INSTANCE_METATABLE_NAME);
     
-    wax_log(LOG_GC, @"Releasing %@ %@(%p)", instanceUserdata->isClass ? @"Class" : @"Instance", [instanceUserdata->instance class], instanceUserdata->instance);
+    if( !instanceUserdata->isDealloced )
+    {
+        wax_log(LOG_GC, @"Releasing %@ %@(%p)", instanceUserdata->isClass ? @"Class" : @"Instance", [instanceUserdata->instance class], instanceUserdata->instance);
     
-    if (!instanceUserdata->isClass && !instanceUserdata->isSuper) {        
-        [instanceUserdata->instance release];
-    }
-    
+      if (!instanceUserdata->isClass && !instanceUserdata->isSuper) {        
+          [instanceUserdata->instance release];
+      }
+    }    
+  
     return 0;
 }
 

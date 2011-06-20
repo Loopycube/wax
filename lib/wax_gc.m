@@ -33,11 +33,17 @@
     while (lua_next(L, -2)) {
         wax_instance_userdata *instanceUserdata = (wax_instance_userdata *)luaL_checkudata(L, -1, WAX_INSTANCE_METATABLE_NAME);
         lua_pop(L, 1); // pops the value, keeps the key
-            
+                  
         if (!instanceUserdata->isClass && !instanceUserdata->isSuper && [instanceUserdata->instance retainCount] <= 1) {
             lua_pushvalue(L, -1);
             lua_pushnil(L);
             lua_rawset(L, -4); // Clear it!
+          
+            if( !instanceUserdata->isDealloced )
+            {
+                [instanceUserdata->instance release];
+                instanceUserdata->isDealloced = YES;
+            }
         }        
     }
 
